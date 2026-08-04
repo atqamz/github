@@ -16,6 +16,14 @@ type spec struct {
 	// changes have to arrive as a squash-merged pull request.
 	RequirePR bool
 
+	// CanApprovePRs lets Actions open and approve pull requests, which only a
+	// repo running a release-bot workflow needs.
+	CanApprovePRs bool
+
+	// NoDependabotSecurityUpdates turns off automated security fix PRs, for a
+	// repo where dependabot's fetcher cannot work.
+	NoDependabotSecurityUpdates bool
+
 	// RulesetID is the numeric id of a branch ruleset that already exists on
 	// GitHub. Set it so the adopt run takes that ruleset over instead of
 	// creating a second one alongside it.
@@ -68,19 +76,21 @@ var repos = []spec{
 		Private:     true,
 	},
 	{
-		Name:        "secondhand",
-		Description: "Talk to one agent. Ship with a crew. CLI: hand",
-		RequirePR:   true,
-		RulesetID:   "19698130",
+		Name:          "secondhand",
+		Description:   "Talk to one agent. Ship with a crew. CLI: hand",
+		RequirePR:     true,
+		CanApprovePRs: true,
+		RulesetID:     "19698130",
 	},
 	{
 		Name:        "secondpeer",
 		Description: "You code. It watches, remembers, and helps. CLI: peer",
 	},
 	{
-		Name:        "universe",
-		Description: "Personal NixOS flake: Hyprland + caelestia desktop across two laptops, with home-manager, sops-nix, and disko",
-		RulesetID:   "17922140",
+		Name:                        "universe",
+		Description:                 "Personal NixOS flake: Hyprland + caelestia desktop across two laptops, with home-manager, sops-nix, and disko",
+		NoDependabotSecurityUpdates: true,
+		RulesetID:                   "17922140",
 	},
 	{
 		Name:        "vault",

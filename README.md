@@ -37,7 +37,12 @@ Every managed repo gets:
 | `has_projects` | false | unused |
 | `archive_on_destroy` | true | removing a row archives the repo, it does not delete it |
 
-Plus vulnerability alerts on, and a `main guard` branch ruleset on `~DEFAULT_BRANCH` with `deletion` and `non_fast_forward` blocked.
+Plus, as separate resources:
+
+- vulnerability alerts on
+- `default_workflow_permissions: read` and `can_approve_pull_request_reviews: false`, so a workflow with no `permissions:` block of its own gets read-only. `secondhand` overrides the approve flag via `CanApprovePRs`, because `release-please-action` opens pull requests and cannot work without it.
+- dependabot security updates on, except where `NoDependabotSecurityUpdates` says otherwise (`universe`; see its AGENTS.md for why its npm fetcher cannot work). Public repos only - private ones report the feature as unavailable on a personal plan.
+- a `main guard` branch ruleset on `~DEFAULT_BRANCH` with `deletion` and `non_fast_forward` blocked
 
 Alerts are a separate `RepositoryVulnerabilityAlerts` resource rather than the `vulnerabilityAlerts` field on the repository, which the provider deprecates and will drop in its next major.
 
@@ -54,6 +59,29 @@ Alerts are a separate `RepositoryVulnerabilityAlerts` resource rather than the `
 **Labels** - dependabot creates `dependencies`, `nix` and `github_actions` on its own, so declaring the label set here would fight it on every alert.
 
 **Archived repos** (`brain`, `mirufm`) - GitHub rejects field writes on an archived repo, so including them would mean a permanently failing diff for no benefit. Unarchive first if either needs to come back under management.
+
+**`allow_forking`** - not settable at all here. GitHub answers `422 Allow forks setting can only be changed on org-owned private repositories` for every personal repo, public or private. Worse, the provider reports the update as succeeding while GitHub ignores it, which leaves Pulumi state holding a value that does not exist and a phantom diff on the next refresh. Do not add the field back.
+
+**Secret scanning and push protection** - no field on `Repository` and no dedicated resource in the provider (checked in 6.14.1). Enabled by hand on the public repos:
+
+```bash
+gh api -X PATCH repos/atqamz/<repo> --input - <<'EOF'
+{"security_and_analysis":{"secret_scanning":{"status":"enabled"},"secret_scanning_push_protection":{"status":"enabled"}}}
+EOF
+```
+
+The five private repos report it unavailable - it needs Advanced Security, which a personal plan does not include.
+
+**Interaction limits** - also absent from the provider, and applied by hand to the config and profile repos so only collaborators can open issues and pull requests:
+
+```bash
+gh api -X PUT repos/atqamz/<repo>/interaction-limits -f limit=collaborators_only -f expiry=six_months
+```
+
+`six_months` is GitHub's maximum; there is no permanent setting, so these **lapse on 2027-02-04** unless renewed.
+That is a silent expiry, which is the failure mode worth wiring a timer against rather than trusting to memory.
+
+Note what this does and does not buy: a public repo on GitHub can always be forked, so an outside PR can always be *opened* once the limit lapses. What stops one landing is that nobody else has write access and the ruleset governs the default branch. The interaction limit is the layer that stops it being opened at all.
 
 **Rule types the provider does not model** - `secondhand` carries a `code_coverage` rule that the Go SDK has no field for. The provider leaves unmodelled rule types in place rather than stripping them, so it survives a run untouched. Do not assume that holds for every rule type; check a preview diff before trusting it.
 

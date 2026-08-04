@@ -34,7 +34,7 @@ func (s spec) apply(ctx *pulumi.Context, adopt bool) error {
 		opts = append(opts, pulumi.Import(pulumi.ID(s.Name)))
 	}
 
-	repo, err := github.NewRepository(ctx, s.Name, &github.RepositoryArgs{
+	args := &github.RepositoryArgs{
 		Name:        pulumi.String(s.Name),
 		Description: pulumi.String(s.Description),
 		HomepageUrl: pulumi.String(s.Homepage),
@@ -53,7 +53,9 @@ func (s spec) apply(ctx *pulumi.Context, adopt bool) error {
 		DeleteBranchOnMerge: pulumi.Bool(true),
 
 		ArchiveOnDestroy: pulumi.Bool(true),
-	}, opts...)
+	}
+
+	repo, err := github.NewRepository(ctx, s.Name, args, opts...)
 	if err != nil {
 		return err
 	}
@@ -69,6 +71,27 @@ func (s spec) apply(ctx *pulumi.Context, adopt bool) error {
 	}, alertOpts...)
 	if err != nil {
 		return err
+	}
+
+	_, err = github.NewWorkflowRepositoryPermissions(ctx, s.Name+"-workflow-permissions", &github.WorkflowRepositoryPermissionsArgs{
+		Repository:                   repo.Name,
+		DefaultWorkflowPermissions:   pulumi.String("read"),
+		CanApprovePullRequestReviews: pulumi.Bool(s.CanApprovePRs),
+	}, pulumi.Parent(repo))
+	if err != nil {
+		return err
+	}
+
+	// Private repos report this as unavailable: automated security fixes need
+	// Advanced Security, which is not on a personal plan.
+	if !s.Private {
+		_, err = github.NewRepositoryDependabotSecurityUpdates(ctx, s.Name+"-dependabot-security-updates", &github.RepositoryDependabotSecurityUpdatesArgs{
+			Repository: repo.Name,
+			Enabled:    pulumi.Bool(!s.NoDependabotSecurityUpdates),
+		}, pulumi.Parent(repo))
+		if err != nil {
+			return err
+		}
 	}
 
 	rules := &github.RepositoryRulesetRulesArgs{
