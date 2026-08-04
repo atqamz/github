@@ -90,7 +90,6 @@ var repos = []spec{
 		Name:                        "universe",
 		Description:                 "Personal NixOS flake: Hyprland + caelestia desktop across two laptops, with home-manager, sops-nix, and disko",
 		NoDependabotSecurityUpdates: true,
-		RulesetID:                   "17922140",
 	},
 	{
 		Name:        "vault",
