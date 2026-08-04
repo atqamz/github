@@ -1,0 +1,6 @@
+/github
+/bin/
+.direnv/
+result
+result-*
+Pulumi.*.yaml.bak

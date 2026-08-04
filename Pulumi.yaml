@@ -1,0 +1,7 @@
+name: github-config
+runtime: go
+description: Personal GitHub repo config-as-code
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: ""
