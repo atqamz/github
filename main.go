@@ -1,6 +1,9 @@
 package main
 
 import (
+	"slices"
+	"strings"
+
 	"github.com/pulumi/pulumi-github/sdk/v6/go/github"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi/config"
@@ -8,10 +11,10 @@ import (
 
 func main() {
 	pulumi.Run(func(ctx *pulumi.Context) error {
-		adopt := config.GetBool(ctx, "adopt")
+		adopt := strings.Split(config.Get(ctx, "adopt"), ",")
 
 		for _, s := range repos {
-			if err := s.apply(ctx, adopt); err != nil {
+			if err := s.apply(ctx, slices.Contains(adopt, s.Name)); err != nil {
 				return err
 			}
 		}
@@ -21,8 +24,9 @@ func main() {
 
 // apply declares one repository, its dependabot alert switch, and the ruleset
 // that keeps its default branch from being force-pushed or deleted. adopt
-// switches every resource from create to import, for the first run against
-// repos that already exist.
+// switches every resource from create to import, for the first run against a
+// repo that already exists. It is set per repo, from the comma-separated
+// adopt config, so a run does not re-import repos already in state.
 func (s spec) apply(ctx *pulumi.Context, adopt bool) error {
 	visibility := "public"
 	if s.Private {

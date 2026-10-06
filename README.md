@@ -103,10 +103,11 @@ Deleting one therefore needs a deliberate `pulumi state unprotect`, which is the
 A repo created outside Pulumi has to be imported, or the run will try to create it and fail:
 
 ```bash
-pulumi config set adopt true
+pulumi config set adopt wp
 pulumi up
 pulumi config rm adopt
 ```
 
-`adopt` attaches `pulumi.Import` to the repository, its alert switch, and - where `RulesetID` is set - its existing ruleset.
+`adopt` is a comma-separated list of repo names. A global flag would re-import every managed repo, which fails for any already in state.
+It attaches `pulumi.Import` to each named repository, its alert switch, and - where `RulesetID` is set - its existing ruleset.
 Remove the flag afterwards so later runs are plain updates, and leave it unset in the committed stack file.

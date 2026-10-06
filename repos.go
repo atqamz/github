@@ -97,6 +97,10 @@ var repos = []spec{
 		Private:     true,
 	},
 	{
+		Name:        "wp",
+		Description: "Mobile-first wedding and household planner PWA on Cloudflare Workers",
+	},
+	{
 		Name:        "zen-profile",
 		Description: "Zen browser profile sync (age-encrypted session blobs)",
 		Private:     true,
