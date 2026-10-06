@@ -11,7 +11,7 @@ import (
 
 func main() {
 	pulumi.Run(func(ctx *pulumi.Context) error {
-		adopt := strings.Split(config.Get(ctx, "adopt"), ",")
+		adopt := strings.Fields(strings.ReplaceAll(config.Get(ctx, "adopt"), ",", " "))
 
 		for _, s := range repos {
 			if err := s.apply(ctx, slices.Contains(adopt, s.Name)); err != nil {
@@ -24,9 +24,10 @@ func main() {
 
 // apply declares one repository, its dependabot alert switch, and the ruleset
 // that keeps its default branch from being force-pushed or deleted. adopt
-// switches every resource from create to import, for the first run against a
-// repo that already exists. It is set per repo, from the comma-separated
-// adopt config, so a run does not re-import repos already in state.
+// switches the repository, its alert switch and, where RulesetID is set, its
+// pre-existing ruleset from create to import, for the first run against a repo
+// that already exists. It is set per repo, from the comma-separated adopt
+// config, so a run does not re-import repos already in state.
 func (s spec) apply(ctx *pulumi.Context, adopt bool) error {
 	visibility := "public"
 	if s.Private {
