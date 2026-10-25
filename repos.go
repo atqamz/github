@@ -97,8 +97,10 @@ var repos = []spec{
 		Private:     true,
 	},
 	{
-		Name:        "wp",
-		Description: "Mobile-first wedding and household planner PWA on Cloudflare Workers",
+		Name:        "nestora",
+		Description: "Mobile-first planner PWA for a couple's wedding, household and routines on Cloudflare Workers",
+		Homepage:    "https://nestora.atqamz.com",
+		RulesetID:   "24562556",
 	},
 	{
 		Name:        "zen-profile",
